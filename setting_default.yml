@@ -1,0 +1,9 @@
+push-plus:
+  # False 不启用推送
+  enable: True
+  # 官网获取的推送
+  token: ""
+icloud-cookie:
+  # 网易云cookie
+  MUSIC_U: ""
+  __csrf: ""

@@ -148,7 +148,7 @@ class Signer:
 
 class Context:
     def __init__(self):
-        with open("setting.yml", "r", encoding="utf-8") as file:
+        with open("setting_default.yml", "r", encoding="utf-8") as file:
             self.dic = yaml.load(file.read(), yaml.FullLoader)
 
     def getUserData(self, key, key1=None):

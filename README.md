@@ -23,7 +23,7 @@
 | push-plus | pushpulst推送    | [pushplus(推送加)-破壳网络科技旗下微信消息推送平台](https://www.pushplus.plus/) |
 
 * Cookie两周左右就会过期，请及时更新参数
-* 详情见[setting.yml](./setting.yml)
+* 详情见[setting_default.yml](./setting_default.yml)
 
 ## 🔈 特别声明
 
