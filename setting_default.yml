@@ -1,8 +1,17 @@
+# pushplus https://www.pushplus.plus/
 push-plus:
-  # False 不启用推送
-  enable: True
-  # 官网获取的推送
+  # false 不启用推送 true 开启推送
+  enable: false
+  # 官网获取的推送 token
   token: ""
+# 钉钉机器人推送 https://open.dingtalk.com/document/robots/custom-robot-access
+dingtalk:
+  # false 不启用推送 true 开启推送
+  enable: false
+  # 钉钉机器人 access_token
+  token: ""
+  # 钉钉机器人 安全设置
+  secret: ""
 icloud-cookie:
   # 网易云cookie
   MUSIC_U: ""

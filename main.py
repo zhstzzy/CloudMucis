@@ -12,7 +12,8 @@ import requests
 import json
 import yaml
 
-from pushplus import pushplus
+from Pushplus import Pushplus
+from DingTalk import DingTalk
 from Crypto.Cipher import AES
 
 
@@ -148,7 +149,7 @@ class Signer:
 
 class Context:
     def __init__(self):
-        with open("setting_default.yml", "r", encoding="utf-8") as file:
+        with open("setting.yml", "r", encoding="utf-8") as file:
             self.dic = yaml.load(file.read(), yaml.FullLoader)
 
     def getUserData(self, key, key1=None):
@@ -159,9 +160,12 @@ class Context:
 
 if __name__ == "__main__":
     myContext = Context()
-    push_enable = myContext.getUserData("push-plus", "enable")
-    push_token = myContext.getUserData("push-plus", "token")
-    myLog = pushplus(push_enable, push_token)  # 使用文档内的参数
+    pushplus = myContext.getUserData("push-plus")
+    dingtalk = myContext.getUserData("dingtalk")
+    if pushplus["enable"]:
+        myLog = Pushplus(pushplus["enable"], pushplus["token"])  # 使用文档内的参数
+    if dingtalk["enable"]:
+        myLog = DingTalk(dingtalk["enable"], dingtalk["token"], dingtalk["secret"])  # 使用文档内的参数
     if Bot(myContext, myLog).run():
         myLog.end("✅ 执行成功")
     else:
