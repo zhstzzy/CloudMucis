@@ -165,6 +165,7 @@ if __name__ == "__main__":
     if pushplus["enable"]:
         myLog = Pushplus(pushplus["enable"], pushplus["token"])  # 使用文档内的参数
     if dingtalk["enable"]:
+        # 如果需要添加 at 请自行查看官方文档
         myLog = DingTalk(dingtalk["enable"], dingtalk["token"], dingtalk["secret"])  # 使用文档内的参数
     if Bot(myContext, myLog).run():
         myLog.end("✅ 执行成功")
