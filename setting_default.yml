@@ -12,6 +12,16 @@ dingtalk:
   token: ""
   # 钉钉机器人 安全设置
   secret: ""
+# telegram 机器人推送 https://core.telegram.org/bots
+telegram:
+  # false 不启用推送 true 开启推送
+  enable: false
+  # telegram 机器人 token
+  token: ""
+  # telegram 机器人 chat_id
+  chat_id: ""
+  # 代理
+  proxy: ""
 icloud-cookie:
   # 网易云cookie
   MUSIC_U: ""

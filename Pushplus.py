@@ -2,11 +2,10 @@ from datetime import datetime
 import requests
 
 class Pushplus:
-    def __init__(self, push_enable, push_token=None):
+    def __init__(self, push_token=None):
         now = datetime.now()
         self.msg = now.strftime("%Y/%m/%d (%A) %H:%M:%S")
         self.msg += "\n= = = = = = = = = = = = = = = = = ="
-        self.enable = push_enable
         self.token = push_token
         self.url = "http://www.pushplus.plus/send"
 
@@ -16,14 +15,11 @@ class Pushplus:
         self.msg += "\n= = = = = = = = = = = = = = = = = ="
         self.info(msg)
         print(f"{now_time}------- {msg}")
-        if self.enable == False:
-            print(self.msg)
-        else:
-            data = {"token": self.token, "title": "音乐合伙人评分"+ msg, "content": self.msg, "template": "txt"}
-            data = str(data).encode("utf-8")
-            res = requests.session().post(url=self.url, headers=headers, data=data).json()
-            print(f"{now_time}--- pushplus {res['msg']}")
-            print("= = = = = = = = = = = = = = = = = =")
+        data = {"token": self.token, "title": "音乐合伙人评分"+ msg, "content": self.msg, "template": "txt"}
+        data = str(data).encode("utf-8")
+        res = requests.session().post(url=self.url, headers=headers, data=data).json()
+        print(f"{now_time}--- pushplus {res['msg']}")
+        print("= = = = = = = = = = = = = = = = = =")
 
 
     def info(self, msg: str):

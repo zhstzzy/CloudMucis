@@ -14,6 +14,9 @@ import yaml
 
 from Pushplus import Pushplus
 from DingTalk import DingTalk
+from TelegramBot import TelegramBot
+from log import Log
+
 from Crypto.Cipher import AES
 
 
@@ -148,8 +151,8 @@ class Signer:
 
 
 class Context:
-    def __init__(self):
-        with open("setting.yml", "r", encoding="utf-8") as file:
+    def __init__(self, filename):
+        with open(filename, "r", encoding="utf-8") as file:
             self.dic = yaml.load(file.read(), yaml.FullLoader)
 
     def getUserData(self, key, key1=None):
@@ -158,16 +161,66 @@ class Context:
         return self.dic[key]
 
 
+class NotificationManager:
+    def __init__(self, pushplus_config, dingtalk_config, telegram_config):
+        self.pushplus_config = pushplus_config
+        self.dingtalk_config = dingtalk_config
+        self.telegram_config = telegram_config
+        self.myLog = Log()
+
+    def validate_config(self, config, required_keys):
+        return all(config.get(key, "") != "" for key in required_keys)
+
+    def setup_pushplus(self):
+        if self.validate_config(self.pushplus_config, ['token']):
+            self.myLog = Pushplus(self.pushplus_config['token'])
+        else:
+            self.myLog.end("❌ 请填写pushplus配置")
+
+    def setup_dingtalk(self):
+        if self.validate_config(self.dingtalk_config, ['token', 'secret']):
+            self.myLog = DingTalk(self.dingtalk_config['token'], self.dingtalk_config['secret'])
+        else:
+            self.myLog.end("❌ 请填写钉钉配置")
+
+    def setup_telegram(self):
+        if self.validate_config(self.telegram_config, ['token', 'chat_id', 'proxy']):
+            self.myLog = TelegramBot(self.telegram_config['token'], self.telegram_config['chat_id'],
+                                     self.telegram_config['proxy'])
+        else:
+            self.myLog.end("❌ 请填写telegram配置")
+
+    def setup_notification(self):
+        if self.pushplus_config.get("enable", False):
+            self.setup_pushplus()
+        elif self.dingtalk_config.get("enable", False):
+            self.setup_dingtalk()
+        elif self.telegram_config.get("enable", False):
+            self.setup_telegram()
+        else:
+            self.myLog
+
+
+def validate_cookie(cookie):
+    return bool(cookie.get("MUSIC_U", "") and cookie.get("__csrf", ""))
+
+
 if __name__ == "__main__":
-    myContext = Context()
-    pushplus = myContext.getUserData("push-plus")
-    dingtalk = myContext.getUserData("dingtalk")
-    if pushplus["enable"]:
-        myLog = Pushplus(pushplus["enable"], pushplus["token"])  # 使用文档内的参数
-    if dingtalk["enable"]:
-        # 如果需要添加 at 请自行查看官方文档
-        myLog = DingTalk(dingtalk["enable"], dingtalk["token"], dingtalk["secret"])  # 使用文档内的参数
-    if Bot(myContext, myLog).run():
-        myLog.end("✅ 执行成功")
+    myContext = Context("setting.yml")
+    pushplus_config = myContext.getUserData("push-plus")
+    dingtalk_config = myContext.getUserData("dingtalk")
+    telegram_config = myContext.getUserData("telegram")
+    notification_manager = NotificationManager(pushplus_config, dingtalk_config, telegram_config)
+
+    # 初始化通知服务
+    notification_manager.setup_notification()
+    # 检查 iCloud Cookie 配置
+    icloud_cookie = myContext.getUserData("icloud-cookie")
+    if validate_cookie(icloud_cookie):
+        # 执行 Bot
+        if Bot(myContext, notification_manager.myLog).run():
+            notification_manager.myLog.end("✅ 执行成功")
+        else:
+            notification_manager.myLog.end("❌ 执行失败")
     else:
-        myLog.end("❌ 执行失败")
+        notification_manager.myLog.end("❌ 请填写icloud-cookie")

@@ -9,12 +9,11 @@ import base64
 
 
 class DingTalk:
-    def __init__(self, enable, token=None, secret=None):
+    def __init__(self, token=None, secret=None):
         # now = datetime.now()
         # self.msg = now.strftime("%Y/%m/%d (%A) %H:%M:%S")
         # self.msg += "\n= = = = = = = = = = = = = = = = = "
         self.msg = ''
-        self.enable = enable
         self.secret = secret
         self.token = token
 
@@ -35,25 +34,23 @@ class DingTalk:
         headers = {"Content-Type": "application/json"}
         self.msg += msg
         print(f"{now_time}------- {msg}")
-        if not self.enable:
-            print(self.msg)
+        text = '# 网易云音乐合伙人评分 \n\r ### 时间 \n\r' + now_time + '\n\r ### 消息 \n\r' + self.msg
+        data = {
+            # // markdown消息
+            "markdown": {
+                "text": text,
+                "title": '音乐合伙人通知'
+            },
+            "msgtype": "markdown",
+
+        }
+        data = str(data).encode("utf-8")
+        res = requests.post(url=self.url, headers=headers, data=data).json()
+        if res['errcode'] == 0:
+            print(f"{now_time}------- 钉钉消息发送成功")
         else:
-            text = '# 网易云音乐合伙人评分 \n\r ### 时间 \n\r' + now_time + '\n\r ### 消息 \n\r' + self.msg
-            data = {
-                # // markdown消息
-                "markdown": {
-                    "text": text,
-                    "title": '音乐合伙人通知'
-                },
-                "msgtype": "markdown",
+            print(f"{now_time}------- 钉钉消息发送失败")
 
-            }
-            data = str(data).encode("utf-8")
-            res = requests.post(url=self.url, headers=headers, data=data).json()
-            if res['errcode'] == 0:
-                print(f"{now_time}------- 钉钉消息发送成功")
-            else:
-                print(f"{now_time}------- 钉钉消息发送失败")
 
-    def info(self, msg: str):
-        self.msg += msg + '\n\r'
+def info(self, msg: str):
+    self.msg += msg + '\n\r'
