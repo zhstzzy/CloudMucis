@@ -28,5 +28,7 @@ class TelegramBot:
         headers = {"Content-Type": "application/json"}
         self.msg += msg
         print(f"{now_time}------- {msg}")
-        text = '*网易云音乐合伙人评分* \n\n *=========== 时间 ===========*\n' + now_time + '\n\n *=========== 消息 ===========* \n' + self.msg
-        self.send_message(text)
+        text = "*网易云音乐合伙人评分*\n\n*=========== 时间 ===========*\n {time} \n\n*=========== 消息 ===========*\n {message}"
+        data = text.format(time=now_time, message=self.msg)
+        self.send_message(data)
+
