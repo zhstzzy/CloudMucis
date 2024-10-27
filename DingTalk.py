@@ -29,7 +29,7 @@ class DingTalk:
                                                                                                          timestamp,
                                                                                                          sign)
 
-    def end(self, msg: str):
+    def send(self, msg: str):
         now_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         headers = {"Content-Type": "application/json"}
         self.msg += msg
