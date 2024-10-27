@@ -75,7 +75,6 @@
   3. 这将返回一个 JSON 格式的响应，其中包含最近一条消息的信息，包括 chat_id。在响应中找到 chat 对象，它包含了群组的 chat_id，格式如下：
 
     ``````json
-    jsonCopy code
     "chat": {
         "id": -1001234567890,
         "title": "Group Name",
