@@ -12,6 +12,7 @@ from Crypto.Cipher import AES
 from DingTalk import DingTalk
 from Pushplus import Pushplus
 from TelegramBot import TelegramBot
+from log import Log
 
 
 def to_16(key):
@@ -339,6 +340,7 @@ class NotificationManager:
         self.pushplus_config = pushplus_config
         self.dingtalk_config = dingtalk_config
         self.telegram_config = telegram_config
+        self.myLog = Log()
 
     def validate_config(self, config, required_keys):
         return all(config.get(key, "") != "" for key in required_keys)
@@ -347,20 +349,20 @@ class NotificationManager:
         if self.validate_config(self.pushplus_config, ['token']):
             self.myLog = Pushplus(self.pushplus_config['token'])
         else:
-            self.myLog.end("❌ 请填写pushplus配置")
+            self.myLog.send("❌ 请填写pushplus配置")
 
     def setup_dingtalk(self):
         if self.validate_config(self.dingtalk_config, ['token', 'secret']):
             self.myLog = DingTalk(self.dingtalk_config['token'], self.dingtalk_config['secret'])
         else:
-            self.myLog.end("❌ 请填写钉钉配置")
+            self.myLog.send("❌ 请填写钉钉配置")
 
     def setup_telegram(self):
         if self.validate_config(self.telegram_config, ['token', 'chat_id', 'proxy']):
             self.myLog = TelegramBot(self.telegram_config['token'], self.telegram_config['chat_id'],
                                      self.telegram_config['proxy'])
         else:
-            self.myLog.end("❌ 请填写telegram配置")
+            self.myLog.send("❌ 请填写telegram配置")
 
     def setup_notification(self):
         if self.pushplus_config.get("enable", False):
