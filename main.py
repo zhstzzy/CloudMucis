@@ -378,7 +378,7 @@ def validate_cookie(cookie):
 
 
 if __name__ == "__main__":
-    with open("setting.yml", "r", encoding="utf-8") as f:
+    with open("setting_default.yml", "r", encoding="utf-8") as f:
         all_data = yaml.load(f.read(), yaml.FullLoader)
         pushplus_config = all_data.get("push-plus")
         dingtalk_config = all_data.get("dingtalk")
