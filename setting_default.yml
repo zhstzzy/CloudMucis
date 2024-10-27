@@ -23,6 +23,6 @@ telegram:
   # 代理
   proxy: ""
 icloud-cookie:
-  # 网易云cookie
-  MUSIC_U: ""
-  __csrf: ""
+  # 网易云cookie1
+  - MUSIC_U: ""
+    __csrf: ""
