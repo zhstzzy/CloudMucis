@@ -6,6 +6,7 @@ import codecs
 import random
 import re
 import string
+from time import sleep
 from typing import Callable, Any
 
 import requests
@@ -24,6 +25,7 @@ class Bot:
     def __init__(self, context, log):
         self.userInfoUrl = "https://music.163.com/api/nuser/account/get"
         self.taskDataUrl = "https://interface.music.163.com/api/music/partner/daily/task/get"
+        self.extraMusicDataUrl = "https://interface.music.163.com/api/music/partner/extra/wait/evaluate/work/list"
 
         self.session = requests.session()
         self.log = log
@@ -33,9 +35,16 @@ class Bot:
         try:
             self.__loadCookie()
             self.__getUserName()
+            self.log.info("==== 基础评定 begin ====")
             complete, taskData = self.__getUserTask()
             if not complete:
                 self.__sign(taskData)
+            self.log.info("==== 基础评定 end ====\n")
+            self.log.info("==== 额外评定 begin ====")
+            completeExtra, taskExtraData = self.__getExtraTask()
+            if not completeExtra:
+                self.__signExtra(taskExtraData, taskData["id"], completeExtra)
+            self.log.info("==== 额外评定 end ====\n")
         except RuntimeError:
             return False
         return True
@@ -69,8 +78,22 @@ class Bot:
         self.log.info(f'今日任务：{"已完成" if complete else "未完成"}{todayTask}')
         return complete, taskData
 
+    def __getExtraTask(self):
+        taskExtraData = self.session.get(url=self.extraMusicDataUrl).json()["data"]
+        computed_music = []
+        undone_music = []
+        for x in taskExtraData:
+            if x['completed']:
+                computed_music.append(x)
+            else:
+                undone_music.append(x)
+        computed_count = len(computed_music)
+        extra_count = 7 - computed_count
+        complete = computed_count == 7
+        self.log.info(f'额外任务：{"已完成" if complete else "未完成"}[{computed_count}/7]')
+        return complete, [] if complete else undone_music[:extra_count]
+
     def __sign(self, taskData):
-        self.log.info("开始评分...")
         signer = Signer(self.session, taskData["id"], self.log)
         for task in taskData["works"]:
             work = task["work"]
@@ -78,6 +101,17 @@ class Bot:
                 self.log.info(f'{work["name"]}「{work["authorName"]}」已有评分：{int(task["score"])}分')
             else:
                 signer.sign(work)
+
+
+    def __signExtra(self, taskData, taskId, complete):
+        signer = Signer(self.session, taskId, self.log)
+        for task in taskData:
+            work = task["work"]
+            if not complete:
+                signer.signExtra(work)
+            else:
+                self.log.info(f'{work["name"]}「{work["authorName"]}」已有评分：{int(task["score"])}分')
+
 
 
 def addTo16(data: str):
@@ -89,6 +123,7 @@ def addTo16(data: str):
 class Signer:
     def __init__(self, session: requests.Session, taskID, log):
         self.signUrl = "https://interface.music.163.com/weapi/music/partner/work/evaluate?csrf_token="
+        self.reportListenUrl = 'https://interface.music.163.com/weapi/partner/resource/interact/report?csrf_token='
 
         self.randomStr = "".join(random.choice(
             string.ascii_letters + string.digits) for _ in range(16))  # 随机生成长度为16的字符串
@@ -102,12 +137,66 @@ class Signer:
         self.session = session
         self.taskID = taskID
         self.log = log
+        self.musicScoreRandomRange = [3, 4]
+        self.waitRange = [15, 20]
+        self.musicTags = [
+            [
+                "1-A-1",
+                "1-B-1",
+                "1-C-1",
+                "1-D-1",
+                "1-D-2"
+            ],
+            [
+                "2-A-1",
+                "2-B-1",
+                "2-C-1",
+                "2-D-1",
+                "2-D-2"
+            ],
+            [
+                "3-A-1",
+                "3-A-2",
+                "3-B-1",
+                "3-C-1",
+                "3-D-1",
+                "3-D-2",
+                "3-E-1",
+                "3-E-2"
+            ],
+            [
+                "4-A-1",
+                "4-A-2",
+                "4-B-1",
+                "4-C-1",
+                "4-D-1",
+                "4-D-2",
+                "4-E-1",
+                "4-E-2"
+            ],
+            [
+                "5-A-1",
+                "5-A-2",
+                "5-B-1",
+                "5-C-1",
+                "5-D-1",
+                "5-D-2",
+                "5-E-1",
+                "5-E-2"
+
+            ]
+        ]
+
+    def __waitListen(self):
+        wait = random.randint(self.waitRange[0], self.waitRange[1])
+        sleep(wait)
 
     def __getScoreAndTag(self, work) -> [str, str]:
-        star = "3"
-        if self.pattern.match(work["name"] + work["authorName"]):
-            star = "4"
-        return star, star + "-A-1"
+        star = random.randint(self.musicScoreRandomRange[0], self.musicScoreRandomRange[1])
+        num_to_select = random.randint(1, 3)
+        current_score_tags = self.musicTags[star - 1]
+        selected_values = random.sample(current_score_tags, num_to_select)
+        return star, selected_values
 
     def __getAesEncrypt(self, data: str, key: str):
         bs = AES.block_size
@@ -126,22 +215,65 @@ class Signer:
         return format(rs, 'x').zfill(256)
 
     def sign(self, work):
+        csrf = str(self.session.cookies["__csrf"])
+        self.__waitListen()
+        score, tag = self.__getScoreAndTag(work)
+        data = {
+            "params": self.__getParams({
+                "taskId": self.taskID,
+                "workId": work['id'],
+                "score": score,
+                "tags": tag,
+                "customTags": "%5B%5D",
+                "comment": "",
+                "syncYunCircle": "true",
+                "csrf_token": csrf
+            }).replace("\n", ""),
+            "encSecKey": self.__getEncSecKey()
+        }
         try:
-            csrf = str(self.session.cookies["__csrf"])
-            score, tag = self.__getScoreAndTag(work)
-            data = {
-                "params": self.__getParams({
-                    "taskId": self.taskID,
-                    "workId": work['id'],
-                    "score": score,
-                    "tags": tag,
-                    "customTags": "%5B%5D",
-                    "comment": "",
-                    "syncYunCircle": "true",
-                    "csrf_token": csrf
-                }).replace("\n", ""),
-                "encSecKey": self.__getEncSecKey()
-            }
+            response = self.session.post(url=f'{self.signUrl}={csrf}', data=data).json()
+            if response["code"] == 200:
+                self.log.info(f'{work["name"]}「{work["authorName"]}」评分完成：{score}分')
+        except Exception as e:
+            self.log.info(f'歌曲「{work["name"]}」评分异常：{str(e)}')
+            raise RuntimeError
+
+    def signExtra(self, work):
+        # work = music_data['work']
+        self.__waitListen()
+        csrf = str(self.session.cookies["__csrf"])
+        score, tags = self.__getScoreAndTag(work)
+        # 先上报，再提交
+        report_data = {
+            "params": self.__getParams({
+                "workId": work['id'],
+                "resourceId": work['resourceId'],
+                "bizResourceId": "",
+                "interactType": "PLAY_END"
+            }),
+            "encSecKey": self.__getEncSecKey()
+        }
+        try:
+            response = self.session.post(url=f'{self.reportListenUrl}={csrf}', data=report_data).json()
+        except Exception as e:
+            self.log.info(f'歌曲「{work["name"]}」上报失败,原因：{str(e)}')
+            raise RuntimeError
+        data = {
+            "params": self.__getParams({
+                "taskId": self.taskID,
+                "workId": work['id'],
+                "score": score,
+                "tags": tags,
+                "customTags": "[]",
+                "comment": "",
+                "syncYunCircle": "true",
+                "extraResource": "true",
+                "csrf_token": csrf
+            }).replace("\n", ""),
+            "encSecKey": self.__getEncSecKey()
+        }
+        try:
             response = self.session.post(url=f'{self.signUrl}={csrf}', data=data).json()
             if response["code"] == 200:
                 self.log.info(f'{work["name"]}「{work["authorName"]}」评分完成：{score}分')
@@ -206,7 +338,7 @@ def validate_cookie(cookie):
 
 
 if __name__ == "__main__":
-    myContext = Context("setting.yml")
+    myContext = Context("setting_default.yml")
     pushplus_config = myContext.getUserData("push-plus")
     dingtalk_config = myContext.getUserData("dingtalk")
     telegram_config = myContext.getUserData("telegram")

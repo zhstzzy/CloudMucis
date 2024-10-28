@@ -7,7 +7,7 @@
 [手动](#-本地手动运行)配合cron实现自动完成**音乐合伙人**任务。
 
 (可选) 使用[钉钉机器人](https://open.dingtalk.com/document/robots/custom-robot-access/)
-或[pushplus（推送加）](https://www.pushplus.plus/)返回任务完成情况。
+或[pushplus（推送加）](https://www.pushplus.plus/)或[telegram机器人](https://core.telegram.org/bots)返回任务完成情况。
 
 ## 📖 使用说明
 
@@ -54,12 +54,14 @@
   使用以下代码创建一个 Telegram bot 并发送一条消息：
 
   ``````python
+  
   import telegram
   
   bot_token = 'YOUR_BOT_TOKEN'
   chat_id = 'YOUR_CHAT_ID'
   bot = telegram.Bot(token=bot_token)
   bot.send_message(chat_id=chat_id, text='Hello, World!')
+  
   ``````
 
   在上面的代码中，你需要将 YOUR_BOT_TOKEN 替换为你的机器人 token，将 YOUR_CHAT_ID 替换为你想要发送消息的聊天 ID。这里的 chat_id 可以是一个用户的 ID，也可以是一个群组或频道的 ID。
@@ -75,8 +77,7 @@
   3. 这将返回一个 JSON 格式的响应，其中包含最近一条消息的信息，包括 chat_id。在响应中找到 chat 对象，它包含了群组的 chat_id，格式如下：
 
     ``````json
-    jsonCopy code
-    "chat": {
+    "chat":{
         "id": -1001234567890,
         "title": "Group Name",
         "type": "supergroup"
